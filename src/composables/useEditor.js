@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useHistory } from './useHistory.js'
 
 const STORAGE_KEY = 'md_editor_content'
@@ -54,6 +54,16 @@ export function useEditor() {
     }
   }
 
+  function setCursorAfterUpdate(textarea, startPos, endPos) {
+    nextTick(() => {
+      if (textarea) {
+        textarea.focus()
+        textarea.selectionStart = startPos
+        textarea.selectionEnd = endPos
+      }
+    })
+  }
+
   function wrapSelection(before, after, textarea) {
     if (!textarea) return
     const start = textarea.selectionStart
@@ -62,12 +72,7 @@ export function useEditor() {
     const newText = content.value.slice(0, start) + before + selected + after + content.value.slice(end)
     pushHistory(content.value)
     content.value = newText
-    // Restore selection after Vue updates DOM
-    setTimeout(() => {
-      textarea.selectionStart = start + before.length
-      textarea.selectionEnd = end + before.length
-      textarea.focus()
-    }, 0)
+    setCursorAfterUpdate(textarea, start + before.length, end + before.length)
   }
 
   function insertText(text, textarea) {
@@ -77,11 +82,7 @@ export function useEditor() {
     const newText = content.value.slice(0, start) + text + content.value.slice(end)
     pushHistory(content.value)
     content.value = newText
-    setTimeout(() => {
-      textarea.selectionStart = start + text.length
-      textarea.selectionEnd = start + text.length
-      textarea.focus()
-    }, 0)
+    setCursorAfterUpdate(textarea, start + text.length, start + text.length)
   }
 
   function prefixLines(prefix, textarea) {
@@ -96,7 +97,9 @@ export function useEditor() {
     const newText = content.value.slice(0, firstLineStart) + prefixed + content.value.slice(end)
     pushHistory(content.value)
     content.value = newText
-    setTimeout(() => textarea.focus(), 0)
+    // Calculate new cursor position after prefix
+    const addedLength = prefix.length * lines.filter(l => l).length
+    setCursorAfterUpdate(textarea, start + addedLength, end + addedLength)
   }
 
   return {

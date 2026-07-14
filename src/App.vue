@@ -68,6 +68,8 @@
         @redo="redo"
         @format="handleFormat"
         @insert-link="handleInsertLink"
+        @save="handleSave"
+        @find="showFind = true"
       />
 
       <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>

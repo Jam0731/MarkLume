@@ -27,7 +27,7 @@ const props = defineProps({
   collapsed: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'togglePane', 'undo', 'redo', 'format', 'insertLink'])
+const emit = defineEmits(['update:modelValue', 'togglePane', 'undo', 'redo', 'format', 'insertLink', 'save', 'find'])
 
 const { t } = useI18n()
 const textarea = ref(null)
@@ -41,7 +41,7 @@ function handleKeydown(e) {
     switch (e.key) {
       case 's':
         e.preventDefault()
-        // Save handled by parent
+        emit('save')
         break
       case 'z':
         if (!e.shiftKey) {
@@ -76,7 +76,7 @@ function handleKeydown(e) {
         break
       case 'f':
         e.preventDefault()
-        // Find handled by parent
+        emit('find')
         break
     }
   }
