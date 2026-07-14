@@ -491,7 +491,18 @@ function syncScroll(source, target) {
   isSyncingScroll = true
   const ratio = source.scrollTop / sourceHeight
   target.scrollTop = ratio * targetHeight
-  isSyncingScroll = false
+  setTimeout(() => { isSyncingScroll = false }, 10)
+}
+
+function setupSyncScroll() {
+  const editorEl = document.querySelector('.editor-pane textarea')
+  const previewEl = document.querySelector('.preview-content')
+  if (editorEl && previewEl) {
+    editorEl.addEventListener('scroll', () => syncScroll(editorEl, previewEl))
+    previewEl.addEventListener('scroll', () => syncScroll(previewEl, editorEl))
+    return true
+  }
+  return false
 }
 
 onMounted(() => {
@@ -526,15 +537,16 @@ onMounted(() => {
     if (file) handleImport(file)
   })
 
-  // Sync scroll listeners
-  nextTick(() => {
-    const editorEl = document.querySelector('.editor-pane textarea')
-    const previewEl = document.querySelector('.preview-content')
-    if (editorEl && previewEl) {
-      editorEl.addEventListener('scroll', () => syncScroll(editorEl, previewEl))
-      previewEl.addEventListener('scroll', () => syncScroll(previewEl, editorEl))
+  // Sync scroll - retry until elements are ready
+  let scrollRetries = 0
+  const trySetupScroll = () => {
+    if (setupSyncScroll()) return
+    if (scrollRetries < 20) {
+      scrollRetries++
+      setTimeout(trySetupScroll, 100)
     }
-  })
+  }
+  nextTick(trySetupScroll)
 })
 
 // Auto-save
