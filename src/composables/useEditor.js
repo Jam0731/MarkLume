@@ -55,11 +55,13 @@ export function useEditor() {
   }
 
   function setCursorAfterUpdate(textarea, startPos, endPos) {
+    const scrollTop = textarea?.scrollTop || 0
     nextTick(() => {
       if (textarea) {
         textarea.focus()
         textarea.selectionStart = startPos
         textarea.selectionEnd = endPos
+        textarea.scrollTop = scrollTop
       }
     })
   }
