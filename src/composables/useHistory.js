@@ -6,7 +6,6 @@ export function useHistory() {
   const historyStack = ref([])
   const historyIndex = ref(-1)
   let lastHistoryText = null
-  let historyTimer = null
 
   function init(initialText) {
     historyStack.value = [initialText]
@@ -14,13 +13,9 @@ export function useHistory() {
     lastHistoryText = initialText
   }
 
-  function pushHistory(currentText) {
-    clearTimeout(historyTimer)
-    historyTimer = setTimeout(() => recordHistory(currentText), 400)
-  }
-
   function recordHistory(currentText) {
     if (currentText === lastHistoryText) return
+    // Remove any future states if we're not at the end
     historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
     historyStack.value.push(currentText)
     if (historyStack.value.length > MAX_HISTORY) historyStack.value.shift()
@@ -42,5 +37,5 @@ export function useHistory() {
     return historyStack.value[historyIndex.value]
   }
 
-  return { init, pushHistory, recordHistory, undo, redo }
+  return { init, recordHistory, undo, redo }
 }

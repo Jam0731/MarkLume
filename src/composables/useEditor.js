@@ -9,13 +9,21 @@ export function useEditor() {
   const filename = ref(localStorage.getItem(FILENAME_KEY) || 'Untitled.md')
   const wordCount = computed(() => content.value.replace(/\s/g, '').length)
 
-  const { init: initHistory, pushHistory, recordHistory, undo: historyUndo, redo: historyRedo } = useHistory()
+  const { init: initHistory, recordHistory, undo: historyUndo, redo: historyRedo } = useHistory()
 
-  // Watch for content changes and record history (debounced)
+  // Track last recorded content to avoid duplicate entries
   let lastRecordedContent = content.value
+  // Flag to skip watcher during undo/redo
+  let skipWatcher = false
+
+  // Watch for content changes and record history
   watch(content, (newVal) => {
+    if (skipWatcher) {
+      skipWatcher = false
+      return
+    }
     if (newVal !== lastRecordedContent) {
-      pushHistory(lastRecordedContent)
+      recordHistory(lastRecordedContent)
       lastRecordedContent = newVal
     }
   })
@@ -33,24 +41,39 @@ export function useEditor() {
     localStorage.setItem(FILENAME_KEY, filename.value)
   }
 
-  function updateContent(newContent) {
-    pushHistory(content.value)
-    content.value = newContent
-  }
-
-  function undo() {
+  function undo(textarea) {
     const prev = historyUndo()
     if (prev !== null) {
+      skipWatcher = true
       lastRecordedContent = prev
       content.value = prev
+      // Restore cursor position
+      if (textarea) {
+        nextTick(() => {
+          textarea.focus()
+          // Try to keep cursor near the end, or at a reasonable position
+          const pos = Math.min(textarea.selectionStart, textarea.value.length)
+          textarea.selectionStart = pos
+          textarea.selectionEnd = pos
+        })
+      }
     }
   }
 
-  function redo() {
+  function redo(textarea) {
     const next = historyRedo()
     if (next !== null) {
+      skipWatcher = true
       lastRecordedContent = next
       content.value = next
+      if (textarea) {
+        nextTick(() => {
+          textarea.focus()
+          const pos = Math.min(textarea.selectionStart, textarea.value.length)
+          textarea.selectionStart = pos
+          textarea.selectionEnd = pos
+        })
+      }
     }
   }
 
@@ -72,7 +95,8 @@ export function useEditor() {
     const end = textarea.selectionEnd
     const selected = content.value.slice(start, end)
     const newText = content.value.slice(0, start) + before + selected + after + content.value.slice(end)
-    pushHistory(content.value)
+    recordHistory(content.value)
+    lastRecordedContent = newText
     content.value = newText
     setCursorAfterUpdate(textarea, start + before.length, end + before.length)
   }
@@ -82,7 +106,8 @@ export function useEditor() {
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const newText = content.value.slice(0, start) + text + content.value.slice(end)
-    pushHistory(content.value)
+    recordHistory(content.value)
+    lastRecordedContent = newText
     content.value = newText
     setCursorAfterUpdate(textarea, start + text.length, start + text.length)
   }
@@ -100,17 +125,19 @@ export function useEditor() {
       const actualLineEnd = lineEnd === -1 ? text.length : lineEnd
       const currentLine = text.slice(lineStart, actualLineEnd)
 
-      // If current line is empty, just insert prefix
       if (!currentLine.trim()) {
+        // Empty line - just insert prefix
         const newText = text.slice(0, start) + prefix + text.slice(start)
-        pushHistory(text)
+        recordHistory(text)
+        lastRecordedContent = newText
         content.value = newText
         setCursorAfterUpdate(textarea, start + prefix.length, start + prefix.length)
       } else {
         // Insert new line with prefix after current line
         const insertText = '\n' + prefix
         const newText = text.slice(0, actualLineEnd) + insertText + text.slice(actualLineEnd)
-        pushHistory(text)
+        recordHistory(text)
+        lastRecordedContent = newText
         content.value = newText
         const newPos = actualLineEnd + insertText.length
         setCursorAfterUpdate(textarea, newPos, newPos)
@@ -125,7 +152,8 @@ export function useEditor() {
     const lines = selected.split('\n')
     const prefixed = lines.map(line => line ? prefix + line : line).join('\n')
     const newText = text.slice(0, firstLineStart) + prefixed + text.slice(end)
-    pushHistory(text)
+    recordHistory(text)
+    lastRecordedContent = newText
     content.value = newText
     const addedLength = prefix.length * lines.filter(l => l).length
     setCursorAfterUpdate(textarea, start + addedLength, end + addedLength)
@@ -137,7 +165,6 @@ export function useEditor() {
     wordCount,
     init,
     save,
-    updateContent,
     undo,
     redo,
     wrapSelection,

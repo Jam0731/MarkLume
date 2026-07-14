@@ -46,14 +46,14 @@ function handleKeydown(e) {
       case 'z':
         if (!e.shiftKey) {
           e.preventDefault()
-          emit('undo')
+          emit('undo', textarea.value)
         }
         break
       case 'y':
       case 'Z':
         if (e.shiftKey || e.key === 'y') {
           e.preventDefault()
-          emit('redo')
+          emit('redo', textarea.value)
         }
         break
       case 'b':
