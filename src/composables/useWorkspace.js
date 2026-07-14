@@ -1,4 +1,6 @@
 import { ref } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
+import { open, save } from '@tauri-apps/plugin-dialog'
 
 export function useWorkspace() {
   const workspacePath = ref(localStorage.getItem('workspace_path') || '')
@@ -7,7 +9,7 @@ export function useWorkspace() {
 
   async function selectWorkspace() {
     try {
-      const selected = await window.__TAURI__?.dialog?.open({
+      const selected = await open({
         directory: true,
         multiple: false,
         title: 'Select Workspace Folder'
@@ -28,7 +30,7 @@ export function useWorkspace() {
       return
     }
     try {
-      const result = await window.__TAURI__?.core?.invoke('list_files', {
+      const result = await invoke('list_files', {
         dirPath: workspacePath.value
       })
       files.value = result || []
@@ -40,7 +42,7 @@ export function useWorkspace() {
 
   async function loadSubdirectory(dirPath) {
     try {
-      const result = await window.__TAURI__?.core?.invoke('list_files', {
+      const result = await invoke('list_files', {
         dirPath: dirPath
       })
       return result || []
@@ -64,7 +66,7 @@ export function useWorkspace() {
 
   async function openFile(filePath) {
     try {
-      const result = await window.__TAURI__?.core?.invoke('read_file', {
+      const result = await invoke('read_file', {
         path: filePath
       })
       return result
@@ -76,7 +78,7 @@ export function useWorkspace() {
 
   async function saveFile(filePath, content) {
     try {
-      await window.__TAURI__?.core?.invoke('write_file', {
+      await invoke('write_file', {
         path: filePath,
         content: content
       })
@@ -87,10 +89,33 @@ export function useWorkspace() {
     }
   }
 
+  async function saveFileAs(content, defaultName) {
+    try {
+      const filePath = await save({
+        defaultPath: defaultName || 'document.md',
+        filters: [
+          { name: 'Markdown', extensions: ['md'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      })
+      if (filePath) {
+        await invoke('write_file', {
+          path: filePath,
+          content: content
+        })
+        return filePath
+      }
+      return null
+    } catch (err) {
+      console.error('Failed to save file as:', err)
+      return null
+    }
+  }
+
   async function createNewFile(dirPath, fileName) {
     const filePath = dirPath + '/' + fileName
     try {
-      await window.__TAURI__?.core?.invoke('create_file', {
+      await invoke('create_file', {
         path: filePath,
         content: '# New File\n\n'
       })
@@ -104,7 +129,7 @@ export function useWorkspace() {
 
   async function deleteFileOrDir(filePath) {
     try {
-      await window.__TAURI__?.core?.invoke('delete_file', {
+      await invoke('delete_file', {
         path: filePath
       })
       await loadFiles()
@@ -117,7 +142,7 @@ export function useWorkspace() {
 
   async function renameFile(oldPath, newPath) {
     try {
-      await window.__TAURI__?.core?.invoke('rename_file', {
+      await invoke('rename_file', {
         oldPath: oldPath,
         newPath: newPath
       })
@@ -140,6 +165,7 @@ export function useWorkspace() {
     isExpanded,
     openFile,
     saveFile,
+    saveFileAs,
     createNewFile,
     deleteFileOrDir,
     renameFile

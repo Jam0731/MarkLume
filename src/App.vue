@@ -182,7 +182,7 @@ const {
 const { html: previewHtml } = usePreview(content)
 const {
   workspacePath, files: workspaceFiles,
-  selectWorkspace, loadFiles, openFile, saveFile,
+  selectWorkspace, loadFiles, openFile, saveFile, saveFileAs,
   createNewFile, deleteFileOrDir
 } = useWorkspace()
 
@@ -236,10 +236,20 @@ function showToast(msg) {
   setTimeout(() => { toastVisible.value = false }, 2000)
 }
 
-function handleSave() {
-  save()
-  statusBarRef.value?.flashSaved()
-  showToast(t('toastSaved'))
+async function handleSave() {
+  if (activeFilePath.value) {
+    // Save to existing file
+    await saveFile(activeFilePath.value, content.value)
+    showToast(t('toastSaved'))
+  } else {
+    // Show save dialog
+    const filePath = await saveFileAs(content.value, filename.value)
+    if (filePath) {
+      activeFilePath.value = filePath
+      filename.value = filePath.split(/[/\\]/).pop()
+      showToast(t('toastSaved'))
+    }
+  }
 }
 
 function handleImport(file) {
