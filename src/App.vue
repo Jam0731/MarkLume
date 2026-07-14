@@ -70,6 +70,7 @@
         @insert-link="handleInsertLink"
         @save="handleSave"
         @find="showFind = true"
+        @before-input="handleInput"
       />
 
       <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
@@ -155,7 +156,7 @@ const { theme, toggleTheme, initTheme } = useTheme()
 const {
   content, filename, wordCount,
   init, save, undo, redo,
-  wrapSelection, insertText, prefixLines
+  wrapSelection, insertText, prefixLines, handleInput
 } = useEditor()
 const { html: previewHtml } = usePreview(content)
 

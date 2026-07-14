@@ -27,12 +27,14 @@ const props = defineProps({
   collapsed: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'togglePane', 'undo', 'redo', 'format', 'insertLink', 'save', 'find'])
+const emit = defineEmits(['update:modelValue', 'togglePane', 'undo', 'redo', 'format', 'insertLink', 'save', 'find', 'before-input'])
 
 const { t } = useI18n()
 const textarea = ref(null)
 
 function handleInput(e) {
+  // Emit before-input event so parent can record history state
+  emit('before-input')
   emit('update:modelValue', e.target.value)
 }
 
@@ -82,16 +84,19 @@ function handleKeydown(e) {
   }
   if (e.key === 'Tab') {
     e.preventDefault()
+    emit('before-input')
     const start = textarea.value.selectionStart
     const end = textarea.value.selectionEnd
     const newValue = props.modelValue.slice(0, start) + '    ' + props.modelValue.slice(end)
     emit('update:modelValue', newValue)
-    setTimeout(() => {
+    nextTick(() => {
       textarea.value.selectionStart = start + 4
       textarea.value.selectionEnd = start + 4
-    }, 0)
+    })
   }
 }
+
+import { nextTick } from 'vue'
 
 defineExpose({ textarea })
 </script>
