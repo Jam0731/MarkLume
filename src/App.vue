@@ -70,8 +70,8 @@
         @insert-link="handleInsertLink"
         @save="handleSave"
         @find="showFind = true"
-        @user-action="onUserAction"
-        @record-change="recordChange"
+        @capture-snapshot="captureSnapshot"
+        @push-snapshot="pushSnapshot"
       />
 
       <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
@@ -158,7 +158,7 @@ const {
   content, filename, wordCount,
   init, save, undo, redo,
   wrapSelection, insertText, prefixLines,
-  onUserAction, recordChange
+  captureSnapshot, pushSnapshot
 } = useEditor()
 const { html: previewHtml } = usePreview(content)
 

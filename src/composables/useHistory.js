@@ -11,13 +11,18 @@ export function useHistory() {
     historyIndex.value = 0
   }
 
+  // Push a state - always adds, truncates future states
   function pushState(text) {
-    // Truncate future states
-    historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
-    // Don't duplicate
-    if (historyStack.value[historyStack.value.length - 1] === text) return
+    // Truncate future states if we went back and made a new change
+    if (historyIndex.value < historyStack.value.length - 1) {
+      historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
+    }
+    // Add new state
     historyStack.value.push(text)
-    if (historyStack.value.length > MAX_HISTORY) historyStack.value.shift()
+    // Trim if too long
+    if (historyStack.value.length > MAX_HISTORY) {
+      historyStack.value.shift()
+    }
     historyIndex.value = historyStack.value.length - 1
   }
 
@@ -33,5 +38,13 @@ export function useHistory() {
     return historyStack.value[historyIndex.value]
   }
 
-  return { init, pushState, undo, redo }
+  // Debug helper
+  function getState() {
+    return {
+      stack: historyStack.value,
+      index: historyIndex.value
+    }
+  }
+
+  return { init, pushState, undo, redo, getState }
 }

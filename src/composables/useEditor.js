@@ -11,16 +11,15 @@ export function useEditor() {
 
   const { init: initHistory, pushState, undo: historyUndo, redo: historyRedo } = useHistory()
 
-  // Snapshot of content before current editing session
-  let beforeSnapshot = content.value
-  // Flag to skip snapshot during undo/redo
+  // Flag to prevent recording during undo/redo
   let isUndoRedo = false
+  // Snapshot to push on next change
+  let pendingSnapshot = null
 
   function init(welcomeDoc) {
     const saved = localStorage.getItem(STORAGE_KEY)
     content.value = saved !== null ? saved : (welcomeDoc || '')
     filename.value = localStorage.getItem(FILENAME_KEY) || 'Untitled.md'
-    beforeSnapshot = content.value
     initHistory(content.value)
   }
 
@@ -29,18 +28,18 @@ export function useEditor() {
     localStorage.setItem(FILENAME_KEY, filename.value)
   }
 
-  // Called when user starts typing (on first keydown of a sequence)
-  function onUserAction() {
+  // Called on keydown - capture current state before change
+  function captureSnapshot() {
     if (!isUndoRedo) {
-      beforeSnapshot = content.value
+      pendingSnapshot = content.value
     }
   }
 
-  // Called after content changes - record the "before" state
-  function recordChange() {
-    if (!isUndoRedo) {
-      pushState(beforeSnapshot)
-      beforeSnapshot = content.value
+  // Called after content changes - push the captured snapshot
+  function pushSnapshot() {
+    if (!isUndoRedo && pendingSnapshot !== null) {
+      pushState(pendingSnapshot)
+      pendingSnapshot = null
     }
   }
 
@@ -49,7 +48,6 @@ export function useEditor() {
     const prev = historyUndo()
     if (prev !== null) {
       content.value = prev
-      beforeSnapshot = prev
     }
     isUndoRedo = false
     if (textarea) {
@@ -67,7 +65,6 @@ export function useEditor() {
     const next = historyRedo()
     if (next !== null) {
       content.value = next
-      beforeSnapshot = next
     }
     isUndoRedo = false
     if (textarea) {
@@ -94,7 +91,8 @@ export function useEditor() {
 
   function wrapSelection(before, after, textarea) {
     if (!textarea) return
-    recordChange()
+    captureSnapshot()
+    pushSnapshot()
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selected = content.value.slice(start, end)
@@ -104,7 +102,8 @@ export function useEditor() {
 
   function insertText(text, textarea) {
     if (!textarea) return
-    recordChange()
+    captureSnapshot()
+    pushSnapshot()
     const start = textarea.selectionStart
     content.value = content.value.slice(0, start) + text + content.value.slice(start)
     setCursor(textarea, start + text.length)
@@ -112,20 +111,19 @@ export function useEditor() {
 
   function prefixLines(prefix, textarea) {
     if (!textarea) return
-    recordChange()
+    captureSnapshot()
+    pushSnapshot()
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const text = content.value
 
     if (start === end) {
-      // No selection - find current line end and insert after it
       const lineEnd = text.indexOf('\n', start)
       const actualLineEnd = lineEnd === -1 ? text.length : lineEnd
       const insert = '\n' + prefix
       content.value = text.slice(0, actualLineEnd) + insert + text.slice(actualLineEnd)
       setCursor(textarea, actualLineEnd + insert.length)
     } else {
-      // Has selection - prefix each line
       const firstLineStart = text.lastIndexOf('\n', start - 1) + 1
       const lines = text.slice(start, end).split('\n')
       const prefixed = lines.map(l => l ? prefix + l : l).join('\n')
@@ -146,7 +144,7 @@ export function useEditor() {
     wrapSelection,
     insertText,
     prefixLines,
-    onUserAction,
-    recordChange
+    captureSnapshot,
+    pushSnapshot
   }
 }
