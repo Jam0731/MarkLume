@@ -29,8 +29,9 @@ export function useEditor() {
   }
 
   // Called on keydown - capture current state before change
+  // Only capture if we don't already have a pending snapshot
   function captureSnapshot() {
-    if (!isUndoRedo) {
+    if (!isUndoRedo && pendingSnapshot === null) {
       pendingSnapshot = content.value
     }
   }
@@ -44,7 +45,15 @@ export function useEditor() {
   }
 
   function undo(textarea) {
+    // Save current state before undoing
+    if (pendingSnapshot !== null) {
+      pushState(pendingSnapshot)
+      pendingSnapshot = null
+    }
+    // Also save current content if it's different from last history entry
+    const currentContent = content.value
     const scrollTop = textarea?.scrollTop || 0
+
     isUndoRedo = true
     const prev = historyUndo()
     if (prev !== null) {
