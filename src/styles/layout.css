@@ -158,6 +158,13 @@
   position: relative;
 }
 
+.editor-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
 .pane {
   flex: 1;
   display: flex;

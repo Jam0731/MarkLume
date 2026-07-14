@@ -31,6 +31,12 @@
         <symbol id="icon-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></symbol>
         <symbol id="icon-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></symbol>
         <symbol id="icon-upload-cloud" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path></symbol>
+        <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></symbol>
+        <symbol id="icon-folder-open" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><path d="M2 10l3-3h4l3 3"></path></symbol>
+        <symbol id="icon-file" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></symbol>
+        <symbol id="icon-file-new" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></symbol>
+        <symbol id="icon-folder-new" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></symbol>
+        <symbol id="icon-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></symbol>
       </defs>
     </svg>
 
@@ -59,32 +65,45 @@
     />
 
     <div class="main">
-      <Editor
-        ref="editorRef"
-        v-model="content"
-        :collapsed="editorCollapsed"
-        @toggle-pane="editorCollapsed = !editorCollapsed"
-        @undo="(textarea) => undo(textarea)"
-        @redo="(textarea) => redo(textarea)"
-        @format="handleFormat"
-        @insert-link="handleInsertLink"
-        @save="handleSave"
-        @find="showFind = true"
-        @content-change="onContentChange"
+      <FileExplorer
+        :workspace-path="workspacePath"
+        :files="workspaceFiles"
+        :active-file="activeFilePath"
+        @select-workspace="handleSelectWorkspace"
+        @new-file="handleNewFile"
+        @refresh="handleRefreshWorkspace"
+        @open="handleOpenFile"
+        @delete="handleDeleteFile"
       />
 
-      <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
+      <div class="editor-area">
+        <Editor
+          ref="editorRef"
+          v-model="content"
+          :collapsed="editorCollapsed"
+          @toggle-pane="editorCollapsed = !editorCollapsed"
+          @undo="(textarea) => undo(textarea)"
+          @redo="(textarea) => redo(textarea)"
+          @format="handleFormat"
+          @insert-link="handleInsertLink"
+          @save="handleSave"
+          @find="showFind = true"
+          @content-change="onContentChange"
+        />
 
-      <Preview
-        ref="previewRef"
-        v-model="content"
-        :html="previewHtml"
-        :mode="previewMode"
-        :collapsed="previewCollapsed"
-        :word-count="wordCount"
-        @update:mode="previewMode = $event"
-        @toggle-pane="previewCollapsed = !previewCollapsed"
-      />
+        <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
+
+        <Preview
+          ref="previewRef"
+          v-model="content"
+          :html="previewHtml"
+          :mode="previewMode"
+          :collapsed="previewCollapsed"
+          :word-count="wordCount"
+          @update:mode="previewMode = $event"
+          @toggle-pane="previewCollapsed = !previewCollapsed"
+        />
+      </div>
     </div>
 
     <StatusBar ref="statusBarRef" />
@@ -146,10 +165,12 @@ import WebToMd from './components/WebToMd.vue'
 import InsertMermaid from './components/InsertMermaid.vue'
 import InsertImage from './components/InsertImage.vue'
 import ExportImage from './components/ExportImage.vue'
+import FileExplorer from './components/FileExplorer.vue'
 import { useEditor } from './composables/useEditor.js'
 import { usePreview } from './composables/usePreview.js'
 import { useTheme } from './composables/useTheme.js'
 import { useI18n } from './composables/useI18n.js'
+import { useWorkspace } from './composables/useWorkspace.js'
 
 const { t } = useI18n()
 const { theme, toggleTheme, initTheme } = useTheme()
@@ -159,6 +180,11 @@ const {
   wrapSelection, insertText, prefixLines
 } = useEditor()
 const { html: previewHtml } = usePreview(content)
+const {
+  workspacePath, files: workspaceFiles,
+  selectWorkspace, loadFiles, openFile, saveFile,
+  createNewFile, deleteFileOrDir
+} = useWorkspace()
 
 // State
 const previewMode = ref('preview')
@@ -168,6 +194,7 @@ const isPageFullscreen = ref(false)
 const editorRef = ref(null)
 const previewRef = ref(null)
 const statusBarRef = ref(null)
+const activeFilePath = ref('')
 
 // Modal states
 const showHelp = ref(false)
@@ -234,6 +261,48 @@ function handleClear() {
   if (confirm(t('confirmClear'))) {
     content.value = ''
     save()
+  }
+}
+
+// Workspace functions
+async function handleSelectWorkspace() {
+  await selectWorkspace()
+}
+
+async function handleRefreshWorkspace() {
+  await loadFiles()
+}
+
+async function handleOpenFile(file) {
+  const result = await openFile(file.path)
+  if (result) {
+    content.value = result.content
+    filename.value = result.file_name
+    activeFilePath.value = file.path
+    save()
+  }
+}
+
+async function handleNewFile() {
+  const dir = workspacePath.value || '.'
+  const name = prompt('Enter file name:', 'untitled.md')
+  if (name) {
+    const filePath = await createNewFile(dir, name)
+    if (filePath) {
+      content.value = '# New File\n\n'
+      filename.value = name
+      activeFilePath.value = filePath
+      save()
+    }
+  }
+}
+
+async function handleDeleteFile(filePath) {
+  await deleteFileOrDir(filePath)
+  if (activeFilePath.value === filePath) {
+    content.value = ''
+    filename.value = 'Untitled.md'
+    activeFilePath.value = ''
   }
 }
 
