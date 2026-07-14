@@ -1,0 +1,11 @@
+{
+  "name": "marklume",
+  "version": "1.0.0",
+  "description": "MarkLume - A sleek, lightweight Markdown editor for the AI era",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4"
+  }
+}
