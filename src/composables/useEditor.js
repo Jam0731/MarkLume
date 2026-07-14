@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useHistory } from './useHistory.js'
 
 const STORAGE_KEY = 'md_editor_content'
@@ -9,12 +9,22 @@ export function useEditor() {
   const filename = ref(localStorage.getItem(FILENAME_KEY) || 'Untitled.md')
   const wordCount = computed(() => content.value.replace(/\s/g, '').length)
 
-  const { init: initHistory, pushHistory, undo: historyUndo, redo: historyRedo } = useHistory()
+  const { init: initHistory, pushHistory, recordHistory, undo: historyUndo, redo: historyRedo } = useHistory()
+
+  // Watch for content changes and record history (debounced)
+  let lastRecordedContent = content.value
+  watch(content, (newVal) => {
+    if (newVal !== lastRecordedContent) {
+      pushHistory(lastRecordedContent)
+      lastRecordedContent = newVal
+    }
+  })
 
   function init(welcomeDoc) {
     const saved = localStorage.getItem(STORAGE_KEY)
     content.value = saved !== null ? saved : (welcomeDoc || '')
     filename.value = localStorage.getItem(FILENAME_KEY) || 'Untitled.md'
+    lastRecordedContent = content.value
     initHistory(content.value)
   }
 
@@ -30,12 +40,18 @@ export function useEditor() {
 
   function undo() {
     const prev = historyUndo()
-    if (prev !== null) content.value = prev
+    if (prev !== null) {
+      lastRecordedContent = prev
+      content.value = prev
+    }
   }
 
   function redo() {
     const next = historyRedo()
-    if (next !== null) content.value = next
+    if (next !== null) {
+      lastRecordedContent = next
+      content.value = next
+    }
   }
 
   function wrapSelection(before, after, textarea) {
