@@ -1,12 +1,12 @@
 {
   "productName": "MarkLume",
-  "version": "1.0.0",
-  "identifier": "com.marklume.app",
+  "version": "2.0.0",
+  "identifier": "com.marklume.editor",
   "build": {
-    "beforeDevCommand": "",
-    "devUrl": "file://../marklume.html",
-    "beforeBuildCommand": "",
-    "frontendDist": "../marklume.html"
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [
