@@ -71,6 +71,16 @@ export function usePreview(content) {
 
   function renderMermaid() {
     if (typeof window.mermaid === 'undefined') return
+
+    // Initialize mermaid if not already done
+    if (!window.mermaid._initialized) {
+      window.mermaid.initialize({
+        startOnLoad: false,
+        theme: document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+      })
+      window.mermaid._initialized = true
+    }
+
     const blocks = document.querySelectorAll('.preview-content pre code.language-mermaid')
     blocks.forEach(code => {
       const pre = code.parentElement
