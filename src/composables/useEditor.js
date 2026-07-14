@@ -91,15 +91,42 @@ export function useEditor() {
     if (!textarea) return
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
-    const before = content.value.slice(0, start)
-    const selected = content.value.slice(start, end) || 'text'
+    const text = content.value
+
+    // No selection - insert new line with prefix after current line
+    if (start === end) {
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1
+      const lineEnd = text.indexOf('\n', start)
+      const actualLineEnd = lineEnd === -1 ? text.length : lineEnd
+      const currentLine = text.slice(lineStart, actualLineEnd)
+
+      // If current line is empty, just insert prefix
+      if (!currentLine.trim()) {
+        const newText = text.slice(0, start) + prefix + text.slice(start)
+        pushHistory(text)
+        content.value = newText
+        setCursorAfterUpdate(textarea, start + prefix.length, start + prefix.length)
+      } else {
+        // Insert new line with prefix after current line
+        const insertText = '\n' + prefix
+        const newText = text.slice(0, actualLineEnd) + insertText + text.slice(actualLineEnd)
+        pushHistory(text)
+        content.value = newText
+        const newPos = actualLineEnd + insertText.length
+        setCursorAfterUpdate(textarea, newPos, newPos)
+      }
+      return
+    }
+
+    // Has selection - add prefix to each selected line
+    const before = text.slice(0, start)
+    const selected = text.slice(start, end)
     const firstLineStart = before.lastIndexOf('\n') + 1
     const lines = selected.split('\n')
     const prefixed = lines.map(line => line ? prefix + line : line).join('\n')
-    const newText = content.value.slice(0, firstLineStart) + prefixed + content.value.slice(end)
-    pushHistory(content.value)
+    const newText = text.slice(0, firstLineStart) + prefixed + text.slice(end)
+    pushHistory(text)
     content.value = newText
-    // Calculate new cursor position after prefix
     const addedLength = prefix.length * lines.filter(l => l).length
     setCursorAfterUpdate(textarea, start + addedLength, end + addedLength)
   }
