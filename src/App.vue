@@ -552,6 +552,14 @@ onMounted(() => {
     }
   }
   nextTick(trySetupScroll)
+
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault()
+      handleSave()
+    }
+  })
 })
 
 // Auto-save
