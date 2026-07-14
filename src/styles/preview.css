@@ -1,0 +1,186 @@
+/* 预览区 */
+.preview-pane {
+  border-left: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  font-family: var(--font-editor);
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text);
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.preview-content .markdown-body {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 40px;
+}
+
+/* 预览区源码编辑 */
+.preview-source {
+  flex: 1;
+  width: 100%;
+  padding: 28px 32px;
+  border: none;
+  outline: none;
+  resize: none;
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.7;
+  background: var(--panel-bg);
+  color: var(--text);
+  caret-color: var(--accent);
+  tab-size: 4;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 预览/源码切换 */
+.preview-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.toggle-btn {
+  padding: 3px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.toggle-btn.active {
+  background: var(--panel-bg);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle-btn:hover:not(.active) {
+  color: var(--accent);
+}
+
+/* Markdown 预览样式 */
+.preview-content h1, .preview-content h2, .preview-content h3,
+.preview-content h4, .preview-content h5, .preview-content h6 {
+  margin-top: 48px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.preview-content h1 { font-size: 2.25em; font-weight: 700; letter-spacing: -0.02em; }
+.preview-content h2 { font-size: 1.75em; }
+.preview-content h3 { font-size: 1.4em; }
+.preview-content h4 { font-size: 1.15em; }
+.preview-content p { margin: 0 0 20px; color: var(--text); }
+.preview-content a { color: var(--accent); text-decoration: none; }
+.preview-content a:hover { text-decoration: underline; }
+.preview-content ul, .preview-content ol { margin: 0 0 20px; padding-left: 1.8em; }
+.preview-content li { margin: 6px 0; }
+
+.preview-content code {
+  background: var(--surface);
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--accent);
+}
+
+.preview-content pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 18px 22px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: 0 0 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.preview-content pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: 0.9em;
+}
+
+.preview-content blockquote {
+  margin: 0 0 20px;
+  padding: 10px 24px;
+  border-left: 3px solid var(--text-muted);
+  background: transparent;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.95em;
+}
+
+.preview-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 20px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.preview-content .mermaid {
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.preview-content .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview-content th, .preview-content td {
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.preview-content th { background: var(--surface); font-weight: 600; color: var(--text); }
+.preview-content img { max-width: 100%; height: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+[data-theme="dark"] .preview-content img { opacity: 0.95; }
+
+.preview-content hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 40px 0;
+}
+
+/* KaTeX */
+.katex { font-size: 1.1em; }
+.preview-content .katex-display { margin: 16px 0; overflow-x: auto; }
+
+/* 任务列表 */
+.preview-content input[type="checkbox"] {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.preview-content li.task-item {
+  list-style: none;
+  margin-left: -1.4em;
+}
+
+.preview-content ul.task-list {
+  padding-left: 1.8em;
+}
