@@ -255,8 +255,48 @@ function handleExport(type) {
 }
 
 // Resize
+const isResizing = ref(false)
+const editorRatio = ref(0.5)
+let resizeRect = null
+
 function startResize(e) {
-  // Resize logic
+  isResizing.value = true
+  resizeRect = document.querySelector('.main')?.getBoundingClientRect()
+  document.body.classList.add('resizing')
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+  e.preventDefault()
+}
+
+function onResizeMove(e) {
+  if (!isResizing.value || !resizeRect) return
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX
+  let ratio = (clientX - resizeRect.left) / resizeRect.width
+  ratio = Math.max(0.15, Math.min(0.85, ratio))
+  editorRatio.value = ratio
+  applySplit()
+}
+
+function stopResize() {
+  if (!isResizing.value) return
+  isResizing.value = false
+  resizeRect = null
+  document.body.classList.remove('resizing')
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+function applySplit() {
+  const editorPane = document.querySelector('.editor-pane')
+  const previewPane = document.querySelector('.preview-pane')
+  if (!editorPane || !previewPane) return
+  if (editorCollapsed.value || previewCollapsed.value) {
+    editorPane.style.flex = ''
+    previewPane.style.flex = ''
+  } else {
+    editorPane.style.flex = `0 0 ${editorRatio.value * 100}%`
+    previewPane.style.flex = '1 1 0'
+  }
 }
 
 // Drag and drop
@@ -264,6 +304,13 @@ onMounted(() => {
   initTheme()
   init(welcomeDoc)
 
+  // Resize listeners
+  window.addEventListener('mousemove', onResizeMove)
+  window.addEventListener('touchmove', onResizeMove, { passive: false })
+  window.addEventListener('mouseup', stopResize)
+  window.addEventListener('touchend', stopResize)
+
+  // Drag and drop listeners
   document.addEventListener('dragenter', (e) => {
     e.preventDefault()
     dragCounter++
