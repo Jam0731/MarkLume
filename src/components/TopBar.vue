@@ -29,6 +29,11 @@
         </div>
       </div>
 
+      <button @click="$emit('openWebToMd')" :title="t('webToMd')">
+        <svg class="icon"><use href="#icon-globe"></use></svg>
+        <span>{{ t('webToMd') }}</span>
+      </button>
+
       <div class="dropdown" ref="langDropdown">
         <button @click="toggleLangMenu" :title="t('langLabel')">
           <svg class="icon"><use href="#icon-globe"></use></svg>
@@ -65,7 +70,7 @@ const props = defineProps({
   modelValue: { type: String, default: 'Untitled.md' }
 })
 
-const emit = defineEmits(['update:modelValue', 'save', 'import', 'toggleTheme', 'openHelp', 'clear', 'openExportImage', 'export'])
+const emit = defineEmits(['update:modelValue', 'save', 'import', 'toggleTheme', 'openHelp', 'clear', 'openExportImage', 'export', 'openWebToMd'])
 
 const { t, setLanguage, currentLang } = useI18n()
 

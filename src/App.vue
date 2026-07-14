@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="app" :class="{ 'page-fullscreen': isPageFullscreen }">
     <!-- SVG 图标精灵 -->
     <svg class="icon-sprite" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
       <defs>
@@ -27,6 +27,7 @@
         <symbol id="icon-close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
         <symbol id="icon-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></symbol>
         <symbol id="icon-mermaid" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="10" x2="7" y2="8"></line><line x1="12" y1="10" x2="17" y2="8"></line><line x1="12" y1="12" x2="7" y2="16"></line><line x1="12" y1="12" x2="17" y2="16"></line><circle cx="7" cy="17" r="2"></circle><circle cx="17" cy="17" r="2"></circle><circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="7" r="2"></circle></symbol>
+        <symbol id="icon-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></symbol>
       </defs>
     </svg>
 
@@ -38,6 +39,7 @@
       @open-help="showHelp = true"
       @clear="handleClear"
       @export="handleExport"
+      @open-web-to-md="showWebToMd = true"
     />
 
     <Toolbar
@@ -68,6 +70,7 @@
       <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
 
       <Preview
+        ref="previewRef"
         v-model="content"
         :html="previewHtml"
         :mode="previewMode"
@@ -90,16 +93,53 @@
         {{ t('dropMessage') }}
       </div>
     </div>
+
+    <!-- Modals -->
+    <FindReplace
+      :visible="showFind"
+      :content="content"
+      @close="showFind = false"
+      @update:content="content = $event"
+    />
+
+    <WebToMd
+      :visible="showWebToMd"
+      @close="showWebToMd = false"
+      @insert="handleInsertMarkdown"
+    />
+
+    <InsertMermaid
+      :visible="showMermaid"
+      @close="showMermaid = false"
+      @insert="handleInsertMarkdown"
+    />
+
+    <InsertImage
+      :visible="showImage"
+      @close="showImage = false"
+      @insert="handleInsertMarkdown"
+    />
+
+    <ExportImage
+      :visible="showExportImage"
+      :html="previewHtml"
+      @close="showExportImage = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import TopBar from './components/TopBar.vue'
 import Toolbar from './components/Toolbar.vue'
 import Editor from './components/Editor.vue'
 import Preview from './components/Preview.vue'
 import StatusBar from './components/StatusBar.vue'
+import FindReplace from './components/FindReplace.vue'
+import WebToMd from './components/WebToMd.vue'
+import InsertMermaid from './components/InsertMermaid.vue'
+import InsertImage from './components/InsertImage.vue'
+import ExportImage from './components/ExportImage.vue'
 import { useEditor } from './composables/useEditor.js'
 import { usePreview } from './composables/usePreview.js'
 import { useTheme } from './composables/useTheme.js'
@@ -118,7 +158,9 @@ const { html: previewHtml } = usePreview(content)
 const previewMode = ref('preview')
 const editorCollapsed = ref(false)
 const previewCollapsed = ref(false)
+const isPageFullscreen = ref(false)
 const editorRef = ref(null)
+const previewRef = ref(null)
 const statusBarRef = ref(null)
 
 // Modal states
@@ -126,6 +168,8 @@ const showHelp = ref(false)
 const showImage = ref(false)
 const showFind = ref(false)
 const showMermaid = ref(false)
+const showWebToMd = ref(false)
+const showExportImage = ref(false)
 
 // Toast
 const toastVisible = ref(false)
@@ -145,6 +189,7 @@ Type Markdown on the left and see the **live preview** on the right.
 - Auto-saved to browser local storage
 - Import / export \`.md\` files
 - "Source" mode on the right for direct editing
+- Convert web links to Markdown
 - Shortcut: Ctrl+S to save
 
 \`\`\`js
@@ -249,9 +294,22 @@ function handleInsertTable(rows, cols) {
   insertText(table, textarea)
 }
 
+function handleInsertMarkdown(md) {
+  content.value += '\n\n' + md
+  showToast(t('toastInsertedMd'))
+}
+
 function handleExport(type) {
-  // Export logic will be implemented
-  showToast('Export ' + type + ' - Coming soon')
+  const blob = new Blob([content.value], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename.value || 'document.md'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  showToast(t('toastExported'))
 }
 
 // Resize
@@ -299,7 +357,41 @@ function applySplit() {
   }
 }
 
-// Drag and drop
+// Fullscreen
+function togglePageFullscreen() {
+  isPageFullscreen.value = !isPageFullscreen.value
+  document.body.classList.toggle('page-fullscreen-active', isPageFullscreen.value)
+  showToast(isPageFullscreen.value ? t('toastPageFullscreenOn') : t('toastPageFullscreenOff'))
+}
+
+function toggleSystemFullscreen() {
+  if (!document.fullscreenEnabled && !document.webkitFullscreenEnabled) {
+    showToast(t('toastNoFullscreenApi'))
+    return
+  }
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    if (document.exitFullscreen) document.exitFullscreen()
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+  } else {
+    const el = document.documentElement
+    if (el.requestFullscreen) el.requestFullscreen()
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+  }
+}
+
+// Sync scroll
+let isSyncingScroll = false
+function syncScroll(source, target) {
+  if (isSyncingScroll) return
+  const sourceHeight = source.scrollHeight - source.clientHeight
+  const targetHeight = target.scrollHeight - target.clientHeight
+  if (sourceHeight <= 0 || targetHeight <= 0) return
+  isSyncingScroll = true
+  const ratio = source.scrollTop / sourceHeight
+  target.scrollTop = ratio * targetHeight
+  isSyncingScroll = false
+}
+
 onMounted(() => {
   initTheme()
   init(welcomeDoc)
