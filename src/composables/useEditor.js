@@ -29,16 +29,37 @@ export function useEditor() {
   }
 
   function undo(textarea) {
+    const cursorPos = textarea?.selectionStart || 0
+    const scrollTop = textarea?.scrollTop || 0
     const prev = history.undo(content.value)
     if (prev !== null) {
       content.value = prev
+      // Restore cursor position (clamped to new content length)
+      setTimeout(() => {
+        if (textarea) {
+          const newPos = Math.min(cursorPos, prev.length)
+          textarea.selectionStart = newPos
+          textarea.selectionEnd = newPos
+          textarea.scrollTop = scrollTop
+        }
+      }, 0)
     }
   }
 
   function redo(textarea) {
+    const cursorPos = textarea?.selectionStart || 0
+    const scrollTop = textarea?.scrollTop || 0
     const next = history.redo()
     if (next !== null) {
       content.value = next
+      setTimeout(() => {
+        if (textarea) {
+          const newPos = Math.min(cursorPos, next.length)
+          textarea.selectionStart = newPos
+          textarea.selectionEnd = newPos
+          textarea.scrollTop = scrollTop
+        }
+      }, 0)
     }
   }
 
