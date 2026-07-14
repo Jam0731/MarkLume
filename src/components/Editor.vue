@@ -29,7 +29,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:modelValue', 'togglePane', 'undo', 'redo', 'format',
-  'insertLink', 'save', 'find', 'save-to-history'
+  'insertLink', 'save', 'find', 'content-change'
 ])
 
 const { t } = useI18n()
@@ -85,20 +85,13 @@ function handleKeydown(e) {
 
   if (e.key === 'Tab') {
     e.preventDefault()
-    emit('save-to-history')
-    const start = textarea.value.selectionStart
-    const end = textarea.value.selectionEnd
-    const newValue = props.modelValue.slice(0, start) + '    ' + props.modelValue.slice(end)
-    emit('update:modelValue', newValue)
-    setTimeout(() => {
-      textarea.value.selectionStart = start + 4
-      textarea.value.selectionEnd = start + 4
-    }, 0)
+    emit('format', 'tab')
   }
 }
 
 function handleInput(e) {
   emit('update:modelValue', e.target.value)
+  emit('content-change')
 }
 
 defineExpose({ textarea })

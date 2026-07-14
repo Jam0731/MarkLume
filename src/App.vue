@@ -70,7 +70,7 @@
         @insert-link="handleInsertLink"
         @save="handleSave"
         @find="showFind = true"
-        @save-to-history="saveToHistory"
+        @content-change="onContentChange"
       />
 
       <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
@@ -155,7 +155,7 @@ const { t } = useI18n()
 const { theme, toggleTheme, initTheme } = useTheme()
 const {
   content, filename, wordCount,
-  init, save, undo, redo, saveToHistory,
+  init, save, undo, redo, saveSnapshot, onContentChange,
   wrapSelection, insertText, prefixLines
 } = useEditor()
 const { html: previewHtml } = usePreview(content)
@@ -260,6 +260,7 @@ function handleFormat(type, ...args) {
       insertText('> ' + text.replace(/\n/g, '\n> '), textarea)
       break
     case 'heading':
+      saveSnapshot()
       const level = args[0] || 1
       const start = textarea.selectionStart
       const before = content.value.slice(0, start)
@@ -269,6 +270,10 @@ function handleFormat(type, ...args) {
       const currentLine = content.value.slice(lineStart, end)
       const newLine = '#'.repeat(level) + ' ' + currentLine.replace(/^#{0,6}\s*/, '')
       content.value = content.value.slice(0, lineStart) + newLine + content.value.slice(end)
+      onContentChange()
+      break
+    case 'tab':
+      insertText('    ', textarea)
       break
   }
 }
@@ -562,13 +567,7 @@ onMounted(() => {
       return
     }
 
-    // Save to history before character-producing keys
-    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-      const key = e.key
-      if (key.length === 1 || key === 'Backspace' || key === 'Delete' || key === 'Enter') {
-        saveToHistory()
-      }
-    }
+    // No need to save to history here - it's handled by the debounced onContentChange
   })
 })
 

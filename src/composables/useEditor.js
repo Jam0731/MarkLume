@@ -10,6 +10,7 @@ export function useEditor() {
   const wordCount = computed(() => content.value.replace(/\s/g, '').length)
 
   const history = useHistory()
+  let recordTimer = null
 
   function init(welcomeDoc) {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -23,43 +24,40 @@ export function useEditor() {
     localStorage.setItem(FILENAME_KEY, filename.value)
   }
 
-  // Save current state to history (call before making changes)
-  function saveToHistory() {
-    history.push(content.value)
+  // Call this on every content change to record history (debounced)
+  function onContentChange() {
+    clearTimeout(recordTimer)
+    recordTimer = setTimeout(() => {
+      history.record(content.value)
+    }, 400)
+  }
+
+  // Save current state immediately (for button actions like bold, list, etc.)
+  function saveSnapshot() {
+    history.saveSnapshot(content.value)
   }
 
   function undo(textarea) {
-    const cursorPos = textarea?.selectionStart || 0
-    const scrollTop = textarea?.scrollTop || 0
-    const prev = history.undo(content.value)
+    const prev = history.undo()
     if (prev !== null) {
       content.value = prev
-      // Use requestAnimationFrame to restore cursor after Vue updates DOM
-      requestAnimationFrame(() => {
-        if (textarea) {
-          const newPos = Math.min(cursorPos, prev.length)
-          textarea.selectionStart = newPos
-          textarea.selectionEnd = newPos
-          textarea.scrollTop = scrollTop
-        }
-      })
+      // Update preview and save
+      save()
+      // Restore focus (don't change cursor position - let browser handle it)
+      if (textarea) {
+        textarea.focus()
+      }
     }
   }
 
   function redo(textarea) {
-    const cursorPos = textarea?.selectionStart || 0
-    const scrollTop = textarea?.scrollTop || 0
     const next = history.redo()
     if (next !== null) {
       content.value = next
-      requestAnimationFrame(() => {
-        if (textarea) {
-          const newPos = Math.min(cursorPos, next.length)
-          textarea.selectionStart = newPos
-          textarea.selectionEnd = newPos
-          textarea.scrollTop = scrollTop
-        }
-      })
+      save()
+      if (textarea) {
+        textarea.focus()
+      }
     }
   }
 
@@ -75,25 +73,27 @@ export function useEditor() {
 
   function wrapSelection(before, after, textarea) {
     if (!textarea) return
-    saveToHistory()
+    saveSnapshot()
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selected = content.value.slice(start, end)
     content.value = content.value.slice(0, start) + before + selected + after + content.value.slice(end)
     setCursor(textarea, start + before.length)
+    onContentChange()
   }
 
   function insertText(text, textarea) {
     if (!textarea) return
-    saveToHistory()
+    saveSnapshot()
     const start = textarea.selectionStart
     content.value = content.value.slice(0, start) + text + content.value.slice(start)
     setCursor(textarea, start + text.length)
+    onContentChange()
   }
 
   function prefixLines(prefix, textarea) {
     if (!textarea) return
-    saveToHistory()
+    saveSnapshot()
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const text = content.value
@@ -112,6 +112,7 @@ export function useEditor() {
       const added = prefix.length * lines.filter(l => l).length
       setCursor(textarea, start + added)
     }
+    onContentChange()
   }
 
   return {
@@ -122,7 +123,8 @@ export function useEditor() {
     save,
     undo,
     redo,
-    saveToHistory,
+    saveSnapshot,
+    onContentChange,
     wrapSelection,
     insertText,
     prefixLines
