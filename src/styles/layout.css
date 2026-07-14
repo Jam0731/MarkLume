@@ -344,3 +344,47 @@
   }
   .resizer { display: none; }
 }
+
+/* 页面全屏 */
+.app.page-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+body.page-fullscreen-active { overflow: hidden; }
+
+/* 打印 / 导出 PDF */
+@media print {
+  .top-bar, .editor-toolbar, .statusbar, .editor-pane, .resizer, .preview-pane .pane-header,
+  .modal-overlay, .toast, .icon-sprite {
+    display: none !important;
+  }
+  .preview-pane {
+    border: none !important;
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+  .preview-content {
+    padding: 0 !important;
+    overflow: visible !important;
+    max-width: none !important;
+    color: #000 !important;
+  }
+  .preview-content .markdown-body {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .preview-content h1, .preview-content h2, .preview-content h3,
+  .preview-content p, .preview-content li, .preview-content td, .preview-content th { color: #000 !important; }
+  .preview-content pre, .preview-content code { background: #f5f5f5 !important; color: #000 !important; }
+  html, body, .app, .main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body { background: #fff !important; color: #000 !important; }
+}

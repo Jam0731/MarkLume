@@ -300,16 +300,118 @@ function handleInsertMarkdown(md) {
 }
 
 function handleExport(type) {
-  const blob = new Blob([content.value], { type: 'text/markdown;charset=utf-8' })
+  const name = filename.value || 'document'
+
+  switch (type) {
+    case 'md':
+      exportFile(content.value, name.replace(/\.(md|markdown)$/i, '') + '.md', 'text/markdown')
+      showToast(t('toastExported'))
+      break
+    case 'word':
+      exportWord(name)
+      break
+    case 'pdf':
+      exportPDF()
+      break
+    case 'html':
+      exportHTML(name)
+      break
+    case 'image':
+      showExportImage.value = true
+      break
+  }
+}
+
+function exportFile(text, filename, type) {
+  const blob = new Blob([text], { type: type + ';charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = filename.value || 'document.md'
+  a.download = filename
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
-  showToast(t('toastExported'))
+}
+
+function exportWord(name) {
+  const docName = name.replace(/\.(md|markdown)$/i, '') + '.doc'
+  const md = content.value
+  let bodyHtml = typeof marked !== 'undefined' ? marked.parse(md) : '<pre>' + escapeHtml(md) + '</pre>'
+
+  const fullHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${escapeHtml(docName)}</title>
+<style>
+  body { font-family: "Microsoft YaHei", sans-serif; font-size: 12pt; line-height: 1.6; }
+  h1 { font-size: 20pt; font-weight: bold; } h2 { font-size: 16pt; font-weight: bold; }
+  h3 { font-size: 14pt; font-weight: bold; } p { margin: 6pt 0; }
+  pre, code { font-family: Consolas, monospace; background: #f5f5f5; padding: 2px 4px; }
+  pre { padding: 8pt; border-radius: 4px; overflow-x: auto; }
+  blockquote { border-left: 3px solid #ccc; padding: 4pt 10pt; color: #555; }
+  table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ccc; padding: 5pt 8pt; }
+  th { background: #f5f5f5; font-weight: bold; }
+  img { max-width: 100%; } hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+  a { color: #0563c1; text-decoration: underline; }
+</style></head><body>${bodyHtml}</body></html>`
+
+  exportFile(fullHtml, docName, 'application/msword')
+  showToast(t('toastWordExported'))
+}
+
+function exportPDF() {
+  showToast(t('toastChoosePdf'))
+  setTimeout(() => window.print(), 500)
+}
+
+function exportHTML(name) {
+  const htmlName = name.replace(/\.(md|markdown)$/i, '') + '.html'
+  const md = content.value
+  let bodyHtml = typeof marked !== 'undefined' ? marked.parse(md) : '<pre>' + escapeHtml(md) + '</pre>'
+
+  const fullHtml = `<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(htmlName)}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif; font-size: 16px; line-height: 1.7; max-width: 820px; margin: 40px auto; padding: 0 20px; color: #212529; }
+  h1, h2 { border-bottom: 1px solid #dee2e6; padding-bottom: 8px; }
+  h1 { font-size: 2em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; }
+  p { margin: 0 0 14px; } a { color: #0d6efd; text-decoration: none; } a:hover { text-decoration: underline; }
+  ul, ol { margin: 0 0 14px; padding-left: 2em; } li { margin: 4px 0; }
+  code { background: #f1f3f5; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 0.9em; }
+  pre { background: #f1f3f5; padding: 14px; border-radius: 8px; overflow-x: auto; margin: 0 0 14px; }
+  pre code { background: transparent; padding: 0; }
+  blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 4px solid #8a93a1; background: #f1f3f5; color: #6c757d; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 14px; }
+  th, td { border: 1px solid #dee2e6; padding: 8px 12px; text-align: left; }
+  th { background: #f1f3f5; font-weight: 600; }
+  img { max-width: 100%; height: auto; border-radius: 6px; }
+  hr { border: none; border-top: 1px solid #dee2e6; margin: 20px 0; }
+</style></head><body>${bodyHtml}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"><\/script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof renderMathInElement !== 'undefined') {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ],
+      throwOnError: false
+    });
+  }
+});
+<\/script></body></html>`
+
+  exportFile(fullHtml, htmlName, 'text/html')
+  showToast(t('toastHtmlExported'))
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
 }
 
 // Resize
@@ -422,6 +524,16 @@ onMounted(() => {
     isDragging.value = false
     const file = e.dataTransfer.files[0]
     if (file) handleImport(file)
+  })
+
+  // Sync scroll listeners
+  nextTick(() => {
+    const editorEl = document.querySelector('.editor-pane textarea')
+    const previewEl = document.querySelector('.preview-content')
+    if (editorEl && previewEl) {
+      editorEl.addEventListener('scroll', () => syncScroll(editorEl, previewEl))
+      previewEl.addEventListener('scroll', () => syncScroll(previewEl, editorEl))
+    }
   })
 })
 
