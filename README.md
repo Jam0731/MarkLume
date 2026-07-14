@@ -2,15 +2,15 @@
 
 # ✨ MarkLume
 
-### A sleek, lightweight Markdown editor for the AI era
+### A sleek, lightweight Markdown editor with VS Code-style workspace
 
 No installation. No account. No subscription. Your words belong to you.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Desktop-Tauri_2-orange)](https://tauri.app)
-[![Stars](https://img.shields.io/github/stars/Jam0731/marklume?style=social)](https://github.com/Jam0731/marklume/stargazers)
-[![Issues](https://img.shields.io/github/issues/Jam0731/marklume)](https://github.com/Jam0731/marklume/issues)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Jam0731/marklume/pulls)
+[![Stars](https://img.shields.io/github/stars/Jam0731/MarkLume?style=social)](https://github.com/Jam0731/MarkLume/stargazers)
+[![Issues](https://img.shields.io/github/issues/Jam0731/MarkLume)](https://github.com/Jam0731/MarkLume/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Jam0731/MarkLume/pulls)
 
 </div>
 
@@ -20,7 +20,7 @@ No installation. No account. No subscription. Your words belong to you.
 
 In the age of AI, Markdown should be simple.
 
-MarkLume is a minimal, focused Markdown editor that respects your workflow. Write in the browser or install as a native desktop app. Everything stays local — your content never leaves your machine.
+MarkLume is a minimal, focused Markdown editor with VS Code-style workspace management. Open a folder, browse your files, and edit Markdown with live preview.
 
 **Lightweight.** ~5-10 MB desktop app (vs Electron's ~150 MB).  
 **Fast.** Pure HTML/CSS/JS — no framework overhead.  
@@ -61,6 +61,14 @@ MarkLume is a minimal, focused Markdown editor that respects your workflow. Writ
 </tr>
 </table>
 
+### Workspace Management
+
+- VS Code-style file explorer
+- Open any folder as workspace
+- Browse and edit .md files
+- Create new files
+- Right-click context menu (rename, delete)
+
 | Export Format | Description |
 |---------------|-------------|
 | `.md` | Raw Markdown |
@@ -73,37 +81,34 @@ MarkLume is a minimal, focused Markdown editor that respects your workflow. Writ
 
 ## Quick Start
 
-### Browser (Zero Install)
-
-```bash
-git clone https://github.com/Jam0731/marklume.git
-# Double-click marklume.html
-```
-
-### Desktop App
-
-```bash
-# Install dependencies
-npm install
-
-# Development mode
-npm run tauri dev
-
-# Build native installer
-npm run tauri build
-```
-
-Output: `src-tauri/target/release/bundle/`
-
 ### Download
 
-Get the latest release from [GitHub Releases](https://github.com/Jam0731/marklume/releases).
+Get the latest release from [GitHub Releases](https://github.com/Jam0731/MarkLume/releases).
 
 | Platform | Format |
 |----------|--------|
 | Windows | `.exe` installer |
 | macOS | `.dmg` |
 | Linux | `.deb`, `.rpm`, `.AppImage` |
+
+### Build from Source
+
+```bash
+# Clone the repo
+git clone https://github.com/Jam0731/MarkLume.git
+cd MarkLume
+
+# Install dependencies
+npm install
+
+# Development mode
+npm run tauri:dev
+
+# Build native installer
+npm run tauri:build
+```
+
+Output: `src-tauri/target/release/bundle/`
 
 ---
 
@@ -123,12 +128,11 @@ Get the latest release from [GitHub Releases](https://github.com/Jam0731/marklum
 
 | Component | Technology |
 |-----------|------------|
-| Frontend | Vanilla HTML/CSS/JS |
-| Rendering | marked.js |
-| Math | KaTeX |
-| Diagrams | Mermaid 10 |
-| Desktop | Tauri 2 (Rust + WebView) |
-| CI/CD | GitHub Actions |
+| Frontend | Vue 3 (Composition API) |
+| Build | Vite |
+| Rendering | marked.js + KaTeX + Mermaid |
+| Desktop | Tauri 2 (Rust + system WebView) |
+| Size | ~5-10 MB |
 
 ---
 
