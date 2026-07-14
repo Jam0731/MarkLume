@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-本地代理脚本，配合 markdown-editor.html 的「网页转 Markdown」功能使用。
+本地代理脚本，配合 MarkLume 的「网页转 Markdown」功能使用。
 解决浏览器跨域限制和部分反爬问题。
 
 用法：

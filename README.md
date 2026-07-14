@@ -77,7 +77,7 @@ MarkLume is a minimal, focused Markdown editor that respects your workflow. Writ
 
 ```bash
 git clone https://github.com/Jam0731/marklume.git
-# Double-click markdown-editor.html
+# Double-click marklume.html
 ```
 
 ### Desktop App

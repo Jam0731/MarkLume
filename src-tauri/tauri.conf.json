@@ -4,9 +4,9 @@
   "identifier": "com.marklume.app",
   "build": {
     "beforeDevCommand": "",
-    "devUrl": "file://../markdown-editor.html",
+    "devUrl": "file://../marklume.html",
     "beforeBuildCommand": "",
-    "frontendDist": "../markdown-editor.html"
+    "frontendDist": "../marklume.html"
   },
   "app": {
     "windows": [
