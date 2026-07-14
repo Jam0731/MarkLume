@@ -34,15 +34,15 @@ export function useEditor() {
     const prev = history.undo(content.value)
     if (prev !== null) {
       content.value = prev
-      // Restore cursor position (clamped to new content length)
-      setTimeout(() => {
+      // Use requestAnimationFrame to restore cursor after Vue updates DOM
+      requestAnimationFrame(() => {
         if (textarea) {
           const newPos = Math.min(cursorPos, prev.length)
           textarea.selectionStart = newPos
           textarea.selectionEnd = newPos
           textarea.scrollTop = scrollTop
         }
-      }, 0)
+      })
     }
   }
 
@@ -52,14 +52,14 @@ export function useEditor() {
     const next = history.redo()
     if (next !== null) {
       content.value = next
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (textarea) {
           const newPos = Math.min(cursorPos, next.length)
           textarea.selectionStart = newPos
           textarea.selectionEnd = newPos
           textarea.scrollTop = scrollTop
         }
-      }, 0)
+      })
     }
   }
 
