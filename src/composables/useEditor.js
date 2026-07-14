@@ -44,6 +44,7 @@ export function useEditor() {
   }
 
   function undo(textarea) {
+    const scrollTop = textarea?.scrollTop || 0
     isUndoRedo = true
     const prev = historyUndo()
     if (prev !== null) {
@@ -51,16 +52,17 @@ export function useEditor() {
     }
     isUndoRedo = false
     if (textarea) {
+      const pos = Math.min(textarea.selectionStart, textarea.value.length)
       nextTick(() => {
-        textarea.focus()
-        const len = textarea.value.length
-        textarea.selectionStart = len
-        textarea.selectionEnd = len
+        textarea.selectionStart = pos
+        textarea.selectionEnd = pos
+        textarea.scrollTop = scrollTop
       })
     }
   }
 
   function redo(textarea) {
+    const scrollTop = textarea?.scrollTop || 0
     isUndoRedo = true
     const next = historyRedo()
     if (next !== null) {
@@ -68,11 +70,11 @@ export function useEditor() {
     }
     isUndoRedo = false
     if (textarea) {
+      const pos = Math.min(textarea.selectionStart, textarea.value.length)
       nextTick(() => {
-        textarea.focus()
-        const len = textarea.value.length
-        textarea.selectionStart = len
-        textarea.selectionEnd = len
+        textarea.selectionStart = pos
+        textarea.selectionEnd = pos
+        textarea.scrollTop = scrollTop
       })
     }
   }
