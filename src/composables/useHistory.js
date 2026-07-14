@@ -1,50 +1,52 @@
 import { ref } from 'vue'
 
-const MAX_HISTORY = 100
+const MAX_HISTORY = 50
 
 export function useHistory() {
-  const historyStack = ref([])
-  const historyIndex = ref(-1)
+  const stack = ref([])
+  const index = ref(-1)
 
-  function init(initialText) {
-    historyStack.value = [initialText]
-    historyIndex.value = 0
+  function init(text) {
+    stack.value = [text]
+    index.value = 0
   }
 
-  // Push a state - always adds, truncates future states
-  function pushState(text) {
-    // Truncate future states if we went back and made a new change
-    if (historyIndex.value < historyStack.value.length - 1) {
-      historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
-    }
+  function push(text) {
+    // Don't push if same as current
+    if (stack.value.length > 0 && stack.value[index.value] === text) return
+    // Remove future states
+    stack.value = stack.value.slice(0, index.value + 1)
     // Add new state
-    historyStack.value.push(text)
-    // Trim if too long
-    if (historyStack.value.length > MAX_HISTORY) {
-      historyStack.value.shift()
-    }
-    historyIndex.value = historyStack.value.length - 1
+    stack.value.push(text)
+    // Trim old states
+    if (stack.value.length > MAX_HISTORY) stack.value.shift()
+    index.value = stack.value.length - 1
   }
 
-  function undo() {
-    if (historyIndex.value <= 0) return null
-    historyIndex.value--
-    return historyStack.value[historyIndex.value]
+  function undo(currentText) {
+    // If we're at the end and current text differs from last saved, save it first
+    if (index.value === stack.value.length - 1 && stack.value[index.value] !== currentText) {
+      push(currentText)
+      index.value--
+    } else if (index.value > 0) {
+      index.value--
+    } else {
+      return null
+    }
+    return stack.value[index.value]
   }
 
   function redo() {
-    if (historyIndex.value >= historyStack.value.length - 1) return null
-    historyIndex.value++
-    return historyStack.value[historyIndex.value]
-  }
-
-  // Debug helper
-  function getState() {
-    return {
-      stack: historyStack.value,
-      index: historyIndex.value
+    if (index.value < stack.value.length - 1) {
+      index.value++
+      return stack.value[index.value]
     }
+    return null
   }
 
-  return { init, pushState, undo, redo, getState }
+  function debug() {
+    return { stack: stack.value.slice(), index: index.value }
+  }
+
+  return { init, push, undo, redo, debug }
 }

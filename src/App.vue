@@ -70,8 +70,7 @@
         @insert-link="handleInsertLink"
         @save="handleSave"
         @find="showFind = true"
-        @capture-snapshot="captureSnapshot"
-        @push-snapshot="pushSnapshot"
+        @save-to-history="saveToHistory"
       />
 
       <div class="resizer" :class="{ hidden: editorCollapsed || previewCollapsed }" @mousedown="startResize"></div>
@@ -156,9 +155,8 @@ const { t } = useI18n()
 const { theme, toggleTheme, initTheme } = useTheme()
 const {
   content, filename, wordCount,
-  init, save, undo, redo,
-  wrapSelection, insertText, prefixLines,
-  captureSnapshot, pushSnapshot
+  init, save, undo, redo, saveToHistory,
+  wrapSelection, insertText, prefixLines
 } = useEditor()
 const { html: previewHtml } = usePreview(content)
 
@@ -561,6 +559,15 @@ onMounted(() => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault()
       handleSave()
+      return
+    }
+
+    // Save to history before character-producing keys
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+      const key = e.key
+      if (key.length === 1 || key === 'Backspace' || key === 'Delete' || key === 'Enter') {
+        saveToHistory()
+      }
     }
   })
 })

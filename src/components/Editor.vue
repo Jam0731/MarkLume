@@ -10,8 +10,8 @@
     <textarea
       ref="textarea"
       :value="modelValue"
-      @keydown="handleKeydown"
       @input="handleInput"
+      @keydown="handleKeydown"
       :placeholder="t('editorPlaceholder')"
       spellcheck="false"
     ></textarea>
@@ -29,16 +29,13 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:modelValue', 'togglePane', 'undo', 'redo', 'format',
-  'insertLink', 'save', 'find', 'capture-snapshot', 'push-snapshot'
+  'insertLink', 'save', 'find', 'save-to-history'
 ])
 
 const { t } = useI18n()
 const textarea = ref(null)
 
 function handleKeydown(e) {
-  // Capture state before any change
-  emit('capture-snapshot')
-
   if (e.ctrlKey || e.metaKey) {
     switch (e.key) {
       case 's':
@@ -88,12 +85,11 @@ function handleKeydown(e) {
 
   if (e.key === 'Tab') {
     e.preventDefault()
-    emit('capture-snapshot')
+    emit('save-to-history')
     const start = textarea.value.selectionStart
     const end = textarea.value.selectionEnd
     const newValue = props.modelValue.slice(0, start) + '    ' + props.modelValue.slice(end)
     emit('update:modelValue', newValue)
-    emit('push-snapshot')
     setTimeout(() => {
       textarea.value.selectionStart = start + 4
       textarea.value.selectionEnd = start + 4
@@ -103,7 +99,6 @@ function handleKeydown(e) {
 
 function handleInput(e) {
   emit('update:modelValue', e.target.value)
-  emit('push-snapshot')
 }
 
 defineExpose({ textarea })
