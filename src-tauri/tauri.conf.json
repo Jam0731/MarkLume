@@ -1,6 +1,6 @@
 {
   "productName": "MarkLume",
-  "version": "2.0.0",
+  "version": "2.0.7",
   "identifier": "com.marklume.editor",
   "build": {
     "beforeDevCommand": "npm run dev",
