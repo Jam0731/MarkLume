@@ -10,8 +10,8 @@
     <textarea
       ref="textarea"
       :value="modelValue"
-      @input="handleInput"
       @keydown="handleKeydown"
+      @input="handleInput"
       :placeholder="t('editorPlaceholder')"
       spellcheck="false"
     ></textarea>
@@ -27,28 +27,30 @@ const props = defineProps({
   collapsed: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'togglePane', 'undo', 'redo', 'format', 'insertLink', 'save', 'find', 'before-input'])
+const emit = defineEmits([
+  'update:modelValue', 'togglePane', 'undo', 'redo', 'format',
+  'insertLink', 'save', 'find', 'user-action', 'record-change'
+])
 
 const { t } = useI18n()
 const textarea = ref(null)
-
-function handleInput(e) {
-  // Emit before-input event so parent can record history state
-  emit('before-input')
-  emit('update:modelValue', e.target.value)
-}
+let lastValue = props.modelValue
 
 function handleKeydown(e) {
+  // Record state before any change happens
+  emit('user-action')
+
   if (e.ctrlKey || e.metaKey) {
     switch (e.key) {
       case 's':
         e.preventDefault()
         emit('save')
-        break
+        return
       case 'z':
         if (!e.shiftKey) {
           e.preventDefault()
           emit('undo', textarea.value)
+          return
         }
         break
       case 'y':
@@ -56,47 +58,54 @@ function handleKeydown(e) {
         if (e.shiftKey || e.key === 'y') {
           e.preventDefault()
           emit('redo', textarea.value)
+          return
         }
         break
       case 'b':
         e.preventDefault()
         emit('format', 'bold')
-        break
+        return
       case 'i':
         if (!e.shiftKey) {
           e.preventDefault()
           emit('format', 'italic')
+          return
         }
         break
       case 'u':
         e.preventDefault()
         emit('format', 'underline')
-        break
+        return
       case 'k':
         e.preventDefault()
         emit('insertLink')
-        break
+        return
       case 'f':
         e.preventDefault()
         emit('find')
-        break
+        return
     }
   }
+
   if (e.key === 'Tab') {
     e.preventDefault()
-    emit('before-input')
+    emit('user-action')
     const start = textarea.value.selectionStart
     const end = textarea.value.selectionEnd
     const newValue = props.modelValue.slice(0, start) + '    ' + props.modelValue.slice(end)
     emit('update:modelValue', newValue)
-    nextTick(() => {
+    emit('record-change')
+    setTimeout(() => {
       textarea.value.selectionStart = start + 4
       textarea.value.selectionEnd = start + 4
-    })
+    }, 0)
   }
 }
 
-import { nextTick } from 'vue'
+function handleInput(e) {
+  emit('update:modelValue', e.target.value)
+  emit('record-change')
+}
 
 defineExpose({ textarea })
 </script>

@@ -11,20 +11,13 @@ export function useHistory() {
     historyIndex.value = 0
   }
 
-  // Record a new state (called BEFORE making changes)
-  function recordState(text) {
-    // If we're not at the end of history, truncate future states
-    if (historyIndex.value < historyStack.value.length - 1) {
-      historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
-    }
-    // Don't record if same as last state
-    if (historyStack.value.length > 0 && text === historyStack.value[historyStack.value.length - 1]) {
-      return
-    }
+  function pushState(text) {
+    // Truncate future states
+    historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
+    // Don't duplicate
+    if (historyStack.value[historyStack.value.length - 1] === text) return
     historyStack.value.push(text)
-    if (historyStack.value.length > MAX_HISTORY) {
-      historyStack.value.shift()
-    }
+    if (historyStack.value.length > MAX_HISTORY) historyStack.value.shift()
     historyIndex.value = historyStack.value.length - 1
   }
 
@@ -40,13 +33,5 @@ export function useHistory() {
     return historyStack.value[historyIndex.value]
   }
 
-  function canUndo() {
-    return historyIndex.value > 0
-  }
-
-  function canRedo() {
-    return historyIndex.value < historyStack.value.length - 1
-  }
-
-  return { init, recordState, undo, redo, canUndo, canRedo }
+  return { init, pushState, undo, redo }
 }
